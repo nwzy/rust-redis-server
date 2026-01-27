@@ -18,7 +18,7 @@ async fn handle_connection(socket: TcpStream, addr: SocketAddr) {
 async fn main() -> Result<()> {
     let listener: TcpListener = TcpListener::bind("127.0.0.1:6379").await?;
 
-    println!("Redis server starting... listening");
+    println!("Redis server starting... {}", listener.local_addr()?);
 
     loop {
         let (socket, addr) = listener.accept().await?;
