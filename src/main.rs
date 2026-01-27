@@ -24,6 +24,10 @@ async fn main() -> Result<()> {
         let (socket, addr) = listener.accept().await?;
         println!("Accepted connection from: {}", addr);
 
-        handle_connection(socket, addr).await;
+        // Spawn independent task for this connection
+        // `async move` transfers ownership to task
+        tokio::spawn(async move {
+            handle_connection(socket, addr).await;
+        });
     }
 }
