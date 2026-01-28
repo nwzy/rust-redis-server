@@ -22,7 +22,7 @@ async fn handle_connection(socket: TcpStream, addr: SocketAddr) -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let listener: TcpListener = TcpListener::bind("127.0.0.1:6379").await?;
+    let listener = TcpListener::bind("127.0.0.1:6379").await?;
 
     println!("Redis server starting... {}", listener.local_addr()?);
 
