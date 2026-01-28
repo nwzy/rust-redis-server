@@ -27,7 +27,10 @@ async fn main() -> Result<()> {
     println!("Redis server starting... {}", listener.local_addr()?.ip());
 
     loop {
-        let (socket, addr) = listener.accept().await?;
+        tokio::select! {
+            // Accept new connections
+            result = listener.accept() => {
+                let (socket, addr) = result?;
         println!("Accepted connection from: {}", addr);
 
         // Spawn independent task for this connection
@@ -37,5 +40,7 @@ async fn main() -> Result<()> {
                 eprintln!("Failed to spawn task: {}", e);
             }
         });
+    }
+        }
     }
 }
