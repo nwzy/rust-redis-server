@@ -41,6 +41,14 @@ async fn main() -> Result<()> {
             }
         });
     }
+
+            _ = tokio::signal::ctrl_c() => {
+                println!("Ctrl + c detected, shutting down...");
+                break;
+            }
         }
     }
+
+    println!("Server shutdown complete");
+    Ok(())
 }
