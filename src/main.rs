@@ -33,7 +33,9 @@ async fn main() -> Result<()> {
         // Spawn independent task for this connection
         // `async move` transfers ownership to task
         tokio::spawn(async move {
-            handle_connection(socket, addr).await;
+            if let Err(e) = handle_connection(socket, addr).await {
+                eprintln!("Failed to spawn task: {}", e);
+            }
         });
     }
 }
