@@ -11,10 +11,7 @@ async fn handle_connection(socket: TcpStream, addr: SocketAddr) -> Result<()> {
     }
 
     // Simulation of RESP protocol parsing
-    tokio::time::sleep(
-        tokio::time::Duration::from_secs(5), // );
-    )
-    .await;
+    tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
 
     println!("Finished processing {}", addr);
     Ok(())
