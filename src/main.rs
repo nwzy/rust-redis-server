@@ -2,8 +2,13 @@ use anyhow::Result;
 use std::net::SocketAddr;
 use tokio::net::{TcpListener, TcpStream};
 
-async fn handle_connection(socket: TcpStream, addr: SocketAddr) {
+async fn handle_connection(socket: TcpStream, addr: SocketAddr) -> Result<()> {
     println!("Processing connection from {}", addr);
+
+    // Simulate potential error
+    if addr.port() % 2 == 0 {
+        anyhow::bail!("Simulated error for even ports");
+    }
 
     // Simulation of RESP protocol parsing
     tokio::time::sleep(
@@ -12,6 +17,7 @@ async fn handle_connection(socket: TcpStream, addr: SocketAddr) {
     .await;
 
     println!("Finished processing {}", addr);
+    Ok(())
 }
 
 #[tokio::main]
