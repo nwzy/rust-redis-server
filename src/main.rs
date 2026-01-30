@@ -13,6 +13,15 @@ async fn handle_connection(
     addr: SocketAddr,
     active_conns: Arc<AtomicUsize>,
 ) -> Result<()> {
+    // Note on `.fetch_add` and `.fetch_sub`:
+    // These methods add and and subtract at the CPU level and typically compile
+    // down to a single CPU instruction with a `LOCK` prefix. This instruction
+    // provides exlusive access to the memory location.
+    //
+    // Note on `+ 1` and `- 1`:
+    // Calling `.fetch_add` and `.fetch_sub` returns the number _before_ the
+    // operation occurred, while incrementing/decrementing it in the background.
+    // This necessiates the addition/subtraction to get the "actual" count
     let count = active_conns.fetch_add(1, Ordering::SeqCst) + 1;
     println!("Processing {} (active connections: {})", addr, count);
 
@@ -36,12 +45,30 @@ async fn main() -> Result<()> {
             // Accept new connections
             result = listener.accept() => {
                 let (socket, addr) = result?;
+                // Note on `Arc::clone()`: Even though `handle_connection` takes in a
+                // Arc<AtomicUsize> type, we have to create a new handle for it
+                // so that ownership can be passed into the task in the thread,
+                // otherwise the original handle would be cleaned up, violating
+                // its lifetime requirements.
+                // By creating a new handle and handing ownership to the task,
+                // every thread can have their own reference to the counter
+                // which can be safely cleaned up once the task completes.
+
+                // Relevent doc for `Arc::clone()`:
+                // The type Arc<T> provides shared ownership of a value of type
+                // T, allocated in the heap. Invoking clone on Arc produces a
+                // new Arc instance, which points to the same allocation on the
+                // heap as the source Arc, while increasing a reference count.
+                // When the last Arc pointer to a given allocation is destroyed,
+                // the value stored in that allocation (often referred to as
+                // "inner value") is also dropped.
                 let active_conns = Arc::clone(&active_conns);
 
                 println!("Accepted connection from: {}", addr);
 
-                // Spawn independent task for this connection
-                // `async move` transfers ownership to task
+                // `async move` transfers ownership of `socket`, `addr`, and
+                // `active_conns` to allow the spawned task `handle_connection`
+                // to continue running even if the main thread ends.
                 tokio::spawn(async move {
                     if let Err(e) = handle_connection(socket, addr, active_conns).await {
                         eprintln!("Connection error for {}: {}", addr, e);
